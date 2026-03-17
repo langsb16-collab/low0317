@@ -1,0 +1,8 @@
+{
+  "name": "법률 문제--텍스트, 음성, 사진 0317",
+  "description": "AI-powered legal platform for lawsuits, debt collection, and document automation with multi-language support.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
