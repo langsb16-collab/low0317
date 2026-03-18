@@ -154,6 +154,11 @@ export default function App() {
   const [isFAQOpen, setIsFAQOpen] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [caseText, setCaseText] = useState('');
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const textInputRef = useRef<HTMLTextAreaElement>(null);
 
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: t('dashboard') },
@@ -180,6 +185,45 @@ export default function App() {
       setIsAnalyzing(false);
       setActiveTab('analysis');
     }, 2000);
+  };
+
+  const handleTextInput = () => {
+    if (textInputRef.current) {
+      textInputRef.current.focus();
+      textInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      alert(`${newFiles.length}개의 파일이 업로드되었습니다.`);
+    }
+  };
+
+  const handlePhotoUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.accept = 'image/*,.pdf,.doc,.docx';
+      fileInputRef.current.click();
+    }
+  };
+
+  const handleVoiceRecording = () => {
+    if (!isRecording) {
+      // 녹음 시작
+      setIsRecording(true);
+      alert('음성 녹취를 시작합니다. (데모: 5초 후 자동 종료)');
+      setTimeout(() => {
+        setIsRecording(false);
+        alert('음성 녹취가 완료되었습니다.');
+      }, 5000);
+    } else {
+      // 녹음 중지
+      setIsRecording(false);
+      alert('음성 녹취가 중지되었습니다.');
+    }
   };
 
   return (
@@ -321,24 +365,62 @@ export default function App() {
                   <h2 className="text-2xl font-black mb-6 text-samsung-blue">{t('caseRegistration')}</h2>
                   
                   <div className="space-y-6">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                    
                     <div className="grid grid-cols-3 gap-4">
-                      <button className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 hover:border-samsung-blue hover:bg-blue-50 transition-all group">
+                      <button 
+                        onClick={handleTextInput}
+                        className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 hover:border-samsung-blue hover:bg-blue-50 transition-all group"
+                      >
                         <FileText size={32} className="text-slate-400 group-hover:text-samsung-blue mb-2" />
                         <span className="text-xs font-bold text-slate-600">텍스트 입력</span>
                       </button>
-                      <button className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 hover:border-samsung-blue hover:bg-blue-50 transition-all group">
+                      <button 
+                        onClick={handlePhotoUpload}
+                        className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 hover:border-samsung-blue hover:bg-blue-50 transition-all group"
+                      >
                         <Camera size={32} className="text-slate-400 group-hover:text-samsung-blue mb-2" />
                         <span className="text-xs font-bold text-slate-600">사진/문서</span>
                       </button>
-                      <button className="flex flex-col items-center justify-center p-6 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200 hover:border-samsung-blue hover:bg-blue-50 transition-all group">
-                        <Mic size={32} className="text-slate-400 group-hover:text-samsung-blue mb-2" />
-                        <span className="text-xs font-bold text-slate-600">음성 녹취</span>
+                      <button 
+                        onClick={handleVoiceRecording}
+                        className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed transition-all group ${
+                          isRecording 
+                            ? 'bg-red-50 border-red-500 animate-pulse' 
+                            : 'bg-slate-50 border-slate-200 hover:border-samsung-blue hover:bg-blue-50'
+                        }`}
+                      >
+                        <Mic size={32} className={`mb-2 ${isRecording ? 'text-red-500' : 'text-slate-400 group-hover:text-samsung-blue'}`} />
+                        <span className="text-xs font-bold text-slate-600">{isRecording ? '녹취 중...' : '음성 녹취'}</span>
                       </button>
                     </div>
+
+                    {uploadedFiles.length > 0 && (
+                      <div className="bg-blue-50 p-4 rounded-2xl">
+                        <p className="text-sm font-bold text-samsung-blue mb-2">업로드된 파일 ({uploadedFiles.length}개)</p>
+                        <div className="space-y-1">
+                          {uploadedFiles.map((file, idx) => (
+                            <div key={idx} className="text-xs text-slate-600 flex items-center space-x-2">
+                              <FileText size={14} />
+                              <span>{file.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-slate-700">사건 내용 요약</label>
                       <textarea 
+                        ref={textInputRef}
+                        value={caseText}
+                        onChange={(e) => setCaseText(e.target.value)}
                         className="w-full h-40 bg-slate-50 border-none rounded-2xl p-4 text-sm focus:ring-2 focus:ring-samsung-blue"
                         placeholder="사건의 경위를 자유롭게 입력하세요..."
                       />
